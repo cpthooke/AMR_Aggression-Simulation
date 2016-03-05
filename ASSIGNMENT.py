@@ -15,7 +15,8 @@ robot_radius = 0.35
 class Assignment():
     def __init__(self): #self. = this.
         rospy.loginfo("Starting info: ")
-        cv2.namedWindow("Image Window", 1)
+        cv2.namedWindow("Left Window", 1)
+        cv2.namedWindow("Right Window", 1)
         cv2.startWindowThread()
         self.bridge = CvBridge()        
         self.wheel_sub = rospy.Subscriber("turtlebot_1/wheel_vel_left", Float32, self.callback)
@@ -31,7 +32,7 @@ class Assignment():
         #t.angular.z = a
              
         #self.pub.publish(t)
-            
+								
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError, e:
@@ -39,6 +40,13 @@ class Assignment():
         image_size = cv_image.shape
         print image_size[0]
         print image_size[1]
+      
+        #b, g, r = cv2.split(cv_image)
+        l = cv_image[:, 0:320]
+        r = cv_image[:, 320:640]				
+        #px = img[100,100]
+        #print px #[157 166 200]
+								
         bgr_thresh = cv2.inRange(cv_image,
                                 numpy.array((0, 0, 0)),
                                 numpy.array((0, 255, 0)))
@@ -61,9 +69,13 @@ class Assignment():
             a = cv2.contourArea(c)
             if a > 100.0:
                 cv2.drawContours(cv_image, c, -1, (255, 0, 0),3)
-                
+        
+        #IplImage* frame1 = 
+        
         print '===='
-        cv2.imshow("Image Window", cv_image)
+        cv2.imshow("Left Window", l)
+        cv2.imshow("Right Window", r)
+								
 
     def listener(self):
         rospy.init_node('listener', anonymous=True)

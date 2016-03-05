@@ -19,9 +19,9 @@ class Assignment():
         cv2.namedWindow("Right Window", 1)
         cv2.startWindowThread()
         self.bridge = CvBridge()        
-        self.wheel_sub = rospy.Subscriber("turtlebot_1/wheel_vel_left", Float32, self.callback)
-        self.pub = rospy.Publisher("turtlebot_1/cmd_vel", Twist, queue_size = 1)
-        self.image_sub = rospy.Subscriber("/turtlebot_1/camera/rgb/image_raw",
+        self.wheel_sub = rospy.Subscriber("/wheel_vel_left", Float32, self.callback)
+        self.pub = rospy.Publisher("/cmd_vel", Twist, queue_size = 1)
+        self.image_sub = rospy.Subscriber("/camera/rgb/image_raw",
                                           Image, self.callback)
 
     def callback(self, data):
@@ -46,29 +46,63 @@ class Assignment():
         r = cv_image[:, 320:640]				
         #px = img[100,100]
         #print px #[157 166 200]
-								
-        bgr_thresh = cv2.inRange(cv_image,
+        
+#########################LEFT Hand Window#########################								
+        bgr_thresh_l = cv2.inRange(l,
                                 numpy.array((0, 0, 0)),
                                 numpy.array((0, 255, 0)))
         
-        hsv_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
+        hsv_img_l = cv2.cvtColor(l, cv2.COLOR_BGR2HSV)
         
-        hsv_thresh = cv2.inRange(hsv_img,
+        hsv_thresh_l = cv2.inRange(hsv_img_l,
                                 numpy.array((60, 200, 0)),
                                 numpy.array((130, 255, 255)))
                  
-        bgr_contours, hierachy = cv2.findContours(bgr_thresh.copy(),
+        bgr_contours_l, hierachy_l = cv2.findContours(bgr_thresh_l.copy(),
                                 cv2.RETR_TREE,
                                 cv2.CHAIN_APPROX_SIMPLE)
 
-        hsv_contours, hierachy = cv2.findContours(hsv_thresh.copy(),
+        hsv_contours_l, hierachy_l = cv2.findContours(hsv_thresh_l.copy(),
                                 cv2.RETR_TREE,
                                 cv2.CHAIN_APPROX_SIMPLE)
-
-        for c in hsv_contours:
+        for c in hsv_contours_l:
             a = cv2.contourArea(c)
             if a > 100.0:
-                cv2.drawContours(cv_image, c, -1, (255, 0, 0),3)
+                cv2.drawContours(l, c, -1, (255, 0, 0),3)
+                w=0.4
+                t = Twist()
+                t.linear.x, t.angular.z = self.forward_kinematics(w,w+0.2)
+                self.pub.publish(t)
+                
+#########################RIGHT Hand Window#########################
+        bgr_thresh_r = cv2.inRange(r,
+                                numpy.array((0, 0, 0)),
+                                numpy.array((0, 255, 0)))
+        
+        hsv_img_r = cv2.cvtColor(r, cv2.COLOR_BGR2HSV)
+        
+        hsv_thresh_r = cv2.inRange(hsv_img_r,
+                                numpy.array((60, 200, 0)),
+                                numpy.array((130, 255, 255)))
+                 
+        bgr_contours_r, hierachy_r = cv2.findContours(bgr_thresh_r.copy(),
+                                cv2.RETR_TREE,
+                                cv2.CHAIN_APPROX_SIMPLE)
+
+        hsv_contours_r, hierachy_r = cv2.findContours(hsv_thresh_r.copy(),
+                                cv2.RETR_TREE,
+                                cv2.CHAIN_APPROX_SIMPLE)
+
+        for c in hsv_contours_r:
+            a = cv2.contourArea(c)
+            if a > 100.0:
+                cv2.drawContours(r, c, -1, (255, 0, 0),3)
+                w=0.4
+                t = Twist()
+                t.linear.x, t.angular.z = self.forward_kinematics(w+0.2,w)
+                self.pub.publish(t)
+                               
+
         
         #IplImage* frame1 = 
         
